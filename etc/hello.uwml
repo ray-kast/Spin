@@ -1,0 +1,24 @@
+res {
+  h1-size: 20;
+
+  style Header {
+    font-weight: "bold";
+  }
+
+  style H1: Header {
+    tag: "h1";
+    font-size: h1-size;
+  }
+}
+
+Html {
+  title: "hi";
+
+  Body {
+    Div {
+      Label: H1 { "Hiya!" }
+
+      "Hello World!"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+use crate::ast::*;
+use std::str::FromStr;
+
+grammar;
+
+// Macros
+
+CommaList<T>: Vec<T> = {
+  <T> => vec![<>],
+  <l:(<T> ",")+> <r:T?> => match r {
+    None => l,
+    Some(r) => {
+      let mut l = l;
+      l.push(r);
+      l
+    }
+  },
+};
+
+CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
+
+// Nonterminals
+
+pub Doc: Doc = <res_list:ResList> <body:Node> => Doc{<>};
+
+ResList = "res" "{" <Res*> "}";
+
+Res: Res = {
+  Prop => Res::Prop(<>),
+  Style => Res::Style(<>),
+};
+
+Style: Style = "style" <name:Ident> <base:BaseStyles> "{" <body:ElemBody> "}" => Style{<>};
+
+Node: Node = {
+  StrLit => Node::Text(<>),
+  Elem => Node::Elem(<>),
+};
+
+Elem: Elem = <name:Ident> <base:BaseStyles> "{" <body:ElemBody> "}" => Elem{<>};
+
+BaseStyles = { => Vec::new(), ":" <CommaList<Ident>> };
+
+ElemBody: ElemBody = <props:Prop*> <children:Node*> => ElemBody{<>};
+
+Prop: Prop = <Ident> ":" <PropVal> ";" => Prop(<>);
+
+PropVal: PropVal = {
+  "default" => PropVal::Default,
+  IntLit => PropVal::Int(<>),
+  StrLit => PropVal::String(<>),
+  Ident => PropVal::Ident(<>),
+  "[" <CommaListOpt<PropVal>> "]" => PropVal::Array(<>),
+};
+
+// Special terminals
+
+Ident: String = r"[\p{L}][\p{L}\p{N}\p{Pc}\p{Pd}]*" => <>.to_string();
+IntLit: i64 = r"[-+]?[0-9]+" => i64::from_str(<>).unwrap();
+StrLit: String = r#""(?:[^"\\]+|\\.)*""# => <>.to_string(); // TODO: postprocess this
