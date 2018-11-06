@@ -1,9 +1,8 @@
-extern crate clap;
-
 #[macro_use]
-extern crate lalrpop_util;
+extern crate lalrpop_util; // TODO: I think I should be able to remove this
 
 pub mod ast;
+mod uwml;
 
 lalrpop_mod!(pub grammar);
 
@@ -30,7 +29,7 @@ fn main() {
 
   let parser = DocParser::new();
 
-  let doc = match parser.parse(&s) {
+  let ast = match parser.parse(&s) {
     Ok(d) => d,
     Err(e) => {
       println!("an error occured during parsing: {}", e);
@@ -39,5 +38,9 @@ fn main() {
     },
   };
 
-  println!("{:#?}", doc);
+  println!("AST: {:#?}", ast);
+
+  let doc = uwml::compile(ast);
+
+  println!("document: {:#?}", doc);
 }

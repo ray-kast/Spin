@@ -1,0 +1,11 @@
+res {
+  def Html {}
+  def Body {}
+  def Div {}
+}
+
+Html {
+  Body {
+    Div { "Hello World" }
+  }
+}

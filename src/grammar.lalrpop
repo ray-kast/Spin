@@ -23,11 +23,17 @@ CommaListOpt<T>: Vec<T> = { => Vec::new(), CommaList<T> };
 
 pub Doc: Doc = <res_list:ResList> <body:Node> => Doc{<>};
 
-ResList = "res" "{" <Res*> "}";
+ResList = { => Vec::new(), "res" "{" <Res*> "}" };
 
 Res: Res = {
   Prop => Res::Prop(<>),
+  Def => Res::Def(<>),
   Style => Res::Style(<>),
+};
+
+Def: Def = {
+  "def" <Ident> "=" <Ident> ";" => Def::Alias(<>),
+  "def" <Ident> "{" <ElemBody> "}" => Def::Elem(<>),
 };
 
 Style: Style = "style" <name:Ident> <base:BaseStyles> "{" <body:ElemBody> "}" => Style{<>};

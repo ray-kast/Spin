@@ -7,7 +7,14 @@ pub struct Doc {
 #[derive(Debug)]
 pub enum Res {
   Prop(Prop),
+  Def(Def),
   Style(Style),
+}
+
+#[derive(Debug)]
+pub enum Def {
+  Alias(String, String),
+  Elem(String, ElemBody),
 }
 
 #[derive(Debug)]
