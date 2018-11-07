@@ -63,4 +63,4 @@ PropVal: PropVal = {
 
 Ident: String = r"[\p{L}][\p{L}\p{N}\p{Pc}\p{Pd}]*" => <>.to_string();
 IntLit: i64 = r"[-+]?[0-9]+" => i64::from_str(<>).unwrap();
-StrLit: String = r#""(?:[^"\\]+|\\.)*""# => <>.to_string(); // TODO: postprocess this
+StrLit: String = r#""(?:[^"\\]+|\\.)*""# => parse_strlit(<>);

@@ -1,3 +1,5 @@
+use regex::Regex;
+
 #[derive(Debug)]
 pub struct Doc {
   pub res_list: Vec<Res>,
@@ -54,4 +56,17 @@ pub enum PropVal {
   Ident(String),
   Elem(Elem),
   Array(Vec<PropVal>),
+}
+
+pub fn parse_strlit(s: &str) -> String {
+  lazy_static! {
+    static ref TRIM_RE: Regex = Regex::new(r#"^"|"$"#).unwrap();
+    static ref ESCAPE_RE: Regex = Regex::new(r#"\\(.)"#).unwrap();
+  }
+
+  let s = TRIM_RE.replace_all(s, "");
+  // TODO: add proper escape processing (e.g. \n, \r, \t, \0, \uXXXX, \xXX, etc.)
+  let s = ESCAPE_RE.replace_all(&s, "$1");
+
+  s.into_owned()
 }

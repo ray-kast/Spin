@@ -2,6 +2,7 @@ pub mod builtin;
 mod compile;
 mod document;
 mod element;
+pub mod html;
 mod node;
 mod scope;
 

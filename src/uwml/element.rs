@@ -2,9 +2,7 @@ use super::prelude::*;
 use std::fmt::Debug;
 
 pub trait ElementClass: Debug {
-  fn get_tag(&self) -> &str;
-
-  fn get_attrs(&self) -> () {} // TODO
+  fn gen_html(&self, element: &Element) -> html::Node;
 }
 
 #[derive(Debug)]
@@ -13,7 +11,7 @@ pub struct CustomElementClass {
 }
 
 impl ElementClass for CustomElementClass {
-  fn get_tag(&self) -> &str { &self.tag }
+  fn gen_html(&self, element: &Element) -> html::Node { unimplemented!() }
 }
 
 impl CustomElementClass {
@@ -23,8 +21,21 @@ impl CustomElementClass {
 #[derive(Debug)]
 pub struct Element {
   class: Rc<ElementClass>,
+  body: Vec<Rc<Node>>,
 }
 
 impl Element {
-  pub fn new(class: Rc<ElementClass>) -> Self { Self { class } }
+  pub fn new<B>(class: Rc<ElementClass>, body: B) -> Self
+  where
+    B: IntoIterator<Item = Rc<Node>>,
+  {
+    Self {
+      class,
+      body: body.into_iter().collect(),
+    }
+  }
+
+  pub fn body(&self) -> &Vec<Rc<Node>> { &self.body }
+
+  pub fn gen_html(&self) -> html::Node { self.class.gen_html(self) }
 }

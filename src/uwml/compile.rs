@@ -2,20 +2,12 @@ use super::prelude::*;
 use crate::ast;
 
 pub fn compile(doc: ast::Doc) -> Document {
-  let root_scope = init_root_scope();
+  let root_scope = builtin::gen_scope();
 
   let scope = compile_scope(doc.res_list, &root_scope);
   let root = compile_node(doc.body, &scope);
 
   Document::new(scope, root)
-}
-
-fn init_root_scope() -> Rc<Scope> {
-  let mut scope = Scope::new(Vec::new());
-
-  // TODO: define builtins
-
-  Rc::new(scope)
 }
 
 fn compile_scope(res_list: Vec<ast::Res>, parent: &Rc<Scope>) -> Rc<Scope> {
@@ -56,5 +48,11 @@ fn compile_node(node: ast::Node, scope: &Rc<Scope>) -> Rc<Node> {
 }
 
 fn compile_element(elem: ast::Elem, scope: &Rc<Scope>) -> Rc<Element> {
-  Rc::new(Element::new(scope.lookup_class(&elem.name)))
+  let body = elem
+    .body
+    .children
+    .into_iter()
+    .map(|n| compile_node(n, scope));
+
+  Rc::new(Element::new(scope.lookup_class(&elem.name), body))
 }

@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate lalrpop_util; // TODO: I think I should be able to remove this
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod ast;
 mod uwml;
 
@@ -43,4 +46,12 @@ fn main() {
   let doc = uwml::compile(ast);
 
   println!("document: {:#?}", doc);
+
+  let html = doc.gen_html();
+
+  println!("HTML document: {:#?}", html);
+
+  let html_str = html.to_string();
+
+  println!("HTML string: {}", html_str);
 }

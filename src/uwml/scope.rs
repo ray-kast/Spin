@@ -69,3 +69,17 @@ pub enum ScopeItem {
 impl From<Rc<ElementClass>> for ScopeItem {
   fn from(class: Rc<ElementClass>) -> Self { ScopeItem::Class(class) }
 }
+
+impl<T> From<Rc<T>> for ScopeItem
+where
+  T: ElementClass + 'static,
+{
+  fn from(class: Rc<T>) -> Self { (class as Rc<ElementClass>).into() }
+}
+
+impl<T> From<T> for ScopeItem
+where
+  T: ElementClass + 'static,
+{
+  fn from(class: T) -> Self { Rc::new(class).into() }
+}

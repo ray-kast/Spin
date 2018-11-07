@@ -1,11 +1,8 @@
-res {
-  def Html {}
-  def Body {}
-  def Div {}
-}
-
 Html {
-  Body {
-    Div { "Hello World" }
+  N {
+    tag: "p";
+    "Hello "
+    N { tag: "em"; "World" }
+    "!"
   }
 }
