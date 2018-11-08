@@ -11,7 +11,7 @@ pub struct CustomElementClass {
 }
 
 impl ElementClass for CustomElementClass {
-  fn gen_html(&self, element: &Element) -> html::Node { unimplemented!() }
+  fn gen_html(&self, _element: &Element) -> html::Node { unimplemented!() }
 }
 
 impl CustomElementClass {
@@ -21,19 +21,24 @@ impl CustomElementClass {
 #[derive(Debug)]
 pub struct Element {
   class: Rc<ElementClass>,
+  props: HashMap<String, Value>,
   body: Vec<Rc<Node>>,
 }
 
 impl Element {
-  pub fn new<B>(class: Rc<ElementClass>, body: B) -> Self
+  pub fn new<P, B>(class: Rc<ElementClass>, props: P, body: B) -> Self
   where
+    P: IntoIterator<Item = (String, Value)>,
     B: IntoIterator<Item = Rc<Node>>,
   {
     Self {
       class,
+      props: props.into_iter().collect(),
       body: body.into_iter().collect(),
     }
   }
+
+  pub fn props(&self) -> &HashMap<String, Value> { &self.props }
 
   pub fn body(&self) -> &Vec<Rc<Node>> { &self.body }
 

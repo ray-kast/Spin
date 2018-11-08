@@ -5,8 +5,11 @@ mod element;
 pub mod html;
 mod node;
 mod scope;
+mod value;
 
-pub use self::{compile::*, document::*, element::*, node::*, scope::*};
+pub use self::{
+  compile::*, document::*, element::*, node::*, scope::*, value::*,
+};
 
 pub mod prelude {
   pub use super::*;

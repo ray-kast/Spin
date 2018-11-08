@@ -50,9 +50,16 @@ pub enum LeafTag {
 pub enum BranchTag {
   Body,
   Div,
+  Em,
   Head,
   Html,
+  P,
   Span,
+  Strong,
+}
+
+impl Leaf {
+  pub fn new(tag: LeafTag) -> Self { Self { tag } }
 }
 
 impl ToString for Leaf {
@@ -118,9 +125,12 @@ impl ToString for BranchTag {
     match self {
       Body => "body",
       Div => "div",
+      Em => "em",
       Head => "head",
       Html => "html",
+      P => "p",
       Span => "span",
+      Strong => "strong",
     }
     .to_string()
   }
@@ -137,9 +147,12 @@ impl FromStr for BranchTag {
     match s {
       "body" => Ok(Body),
       "div" => Ok(Div),
+      "em" => Ok(Em),
       "head" => Ok(Head),
       "html" => Ok(Html),
+      "p" => Ok(P),
       "span" => Ok(Span),
+      "strong" => Ok(Strong),
       s => Err(format!("unknown tag '{}'", s)),
     }
   }
