@@ -23,53 +23,71 @@ fn compile_scope(res_list: Vec<ast::Res>, parent: &Rc<Scope>) -> Rc<Scope> {
 
 fn compile_res(res: ast::Res, scope: &Scope) -> (String, ScopeItem) {
   match res {
-    ast::Res::Prop(_p) => unreachable!(),
+    ast::Res::Prop(ast::Prop(n, v)) => (n, compile_propval(v, scope).into()),
     ast::Res::Def(d) => compile_def(d, scope),
-    ast::Res::Style(_s) => unreachable!(),
+    ast::Res::Style(s) => compile_style(s, scope),
   }
+}
+
+fn compile_style(style: ast::Style, scope: &Scope) -> (String, ScopeItem) {
+  (style.name, Style::new(vec![]).into())
 }
 
 fn compile_def(def: ast::Def, scope: &Scope) -> (String, ScopeItem) {
   match def {
-    ast::Def::Alias(_n, _v) => unreachable!(),
-    ast::Def::Elem(n, e) => (n, compile_def_elem(e, scope).into()),
+    ast::Def::Alias(n, v) => unimplemented!(),
+    ast::Def::Elem(n, e) => unimplemented!(),
   }
 }
 
-fn compile_def_elem(_elem: ast::ElemBody, _scope: &Scope) -> Rc<ElementClass> {
-  Rc::new(CustomElementClass::new("div".to_string())) // TODO
-}
+// fn compile_def_elem(_elem: ast::ElemBody, _scope: &Scope) -> Rc<ElementClass> {
+//   Rc::new(CustomElementClass::new("div".to_string())) // TODO
+// }
 
-fn compile_node(node: ast::Node, scope: &Rc<Scope>) -> Rc<Node> {
+fn compile_node(node: ast::Node, scope: &Scope) -> Rc<Node> {
   Rc::new(match node {
     ast::Node::Text(s) => Node::Text(s),
-    ast::Node::Elem(e) => Node::Element(compile_element(e, scope)),
+    ast::Node::Elem(e) => Node::Element(compile_elem(e, scope)),
   })
 }
 
-fn compile_element(elem: ast::Elem, scope: &Rc<Scope>) -> Rc<Element> {
-  let props = elem
-    .body
-    .props
-    .into_iter()
-    .map(|ast::Prop(k, v)| (k, compile_propval(v, scope)));
+fn compile_elem(elem: ast::Elem, scope: &Scope) -> Rc<Element> {
+  let (props, body) = compile_elembody(elem.body, scope);
 
-  let body = elem
-    .body
-    .children
-    .into_iter()
-    .map(|n| compile_node(n, scope));
-
-  Rc::new(Element::new(scope.lookup_class(&elem.name), props, body))
+  Rc::new(Element::new(scope.lookup_class(&elem.head.class), props, body))
 }
 
-fn compile_propval(val: ast::PropVal, _scope: &Rc<Scope>) -> Value {
+// TODO: why does scope have to be static?
+fn compile_elembody(
+  body: ast::ElemBody,
+  scope: &Scope,
+) -> (Vec<(String, Value)>, Option<Vec<Rc<Node>>>) {
+  (
+    body
+      .props
+      .into_iter()
+      .map(|ast::Prop(k, v)| (k, compile_propval(v, scope)))
+      .collect(),
+    body
+      .children
+      .map(|c| c.into_iter().map(|n| compile_node(n, scope)).collect()),
+  )
+}
+
+fn compile_propval(val: ast::PropVal, scope: &Scope) -> Value {
   match val {
     ast::PropVal::Default => unimplemented!(),
     ast::PropVal::String(s) => s.into(),
     ast::PropVal::Int(i) => i.into(),
-    ast::PropVal::Ident(_s) => unimplemented!(),
-    ast::PropVal::Elem(_e) => unimplemented!(),
-    ast::PropVal::Array(_a) => unimplemented!(),
+    ast::PropVal::Ident(i) => Value::Ident(i),
+    ast::PropVal::Elem(e) => compile_elem(e, scope).into(),
+    ast::PropVal::Array(a) => a
+      .into_iter()
+      .map(|v| compile_propval(v, scope))
+      .collect::<Vec<_>>()
+      .into(),
+    ast::PropVal::Block(b) => b
+      .map(|c| c.into_iter().map(|n| compile_node(n, scope)).collect())
+      .into(),
   }
 }

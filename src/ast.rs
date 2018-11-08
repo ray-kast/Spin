@@ -15,7 +15,7 @@ pub enum Res {
 
 #[derive(Debug)]
 pub enum Def {
-  Alias(String, String),
+  Alias(String, ElemHead),
   Elem(String, ElemBody),
 }
 
@@ -34,15 +34,20 @@ pub enum Node {
 
 #[derive(Debug)]
 pub struct Elem {
-  pub name: String,
-  pub base: Vec<String>,
+  pub head: ElemHead,
   pub body: ElemBody,
+}
+
+#[derive(Debug)]
+pub struct ElemHead {
+  pub class: String,
+  pub base: Vec<String>,
 }
 
 #[derive(Debug)]
 pub struct ElemBody {
   pub props: Vec<Prop>,
-  pub children: Vec<Node>,
+  pub children: Option<Vec<Node>>,
 }
 
 #[derive(Debug)]
@@ -56,6 +61,7 @@ pub enum PropVal {
   Ident(String),
   Elem(Elem),
   Array(Vec<PropVal>),
+  Block(Option<Vec<Node>>),
 }
 
 pub fn parse_strlit(s: &str) -> String {

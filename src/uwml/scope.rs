@@ -60,10 +60,28 @@ impl Scope {
   }
 }
 
+// TODO: try to remove the Clone derive and unwrap things from Rcs
 #[derive(Clone, Debug)]
 pub enum ScopeItem {
-  Const(f64),
+  Value(Rc<Value>),
+  Style(Rc<Style>),
   Class(Rc<ElementClass>),
+}
+
+impl From<Rc<Value>> for ScopeItem {
+  fn from(val: Rc<Value>) -> Self { ScopeItem::Value(val) }
+}
+
+impl From<Value> for ScopeItem {
+  fn from(val: Value) -> Self { Rc::new(val).into() }
+}
+
+impl From<Rc<Style>> for ScopeItem {
+  fn from(style: Rc<Style>) -> Self { ScopeItem::Style(style) }
+}
+
+impl From<Style> for ScopeItem {
+  fn from(style: Style) -> Self { Rc::new(style).into() }
 }
 
 impl From<Rc<ElementClass>> for ScopeItem {

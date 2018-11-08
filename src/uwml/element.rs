@@ -6,6 +6,16 @@ pub trait ElementClass: Debug {
 }
 
 #[derive(Debug)]
+pub struct AliasElementClass {
+  class: Rc<ElementClass>,
+  base: Vec<String>, // TODO
+}
+
+impl ElementClass for AliasElementClass {
+  fn gen_html(&self, _element: &Element) -> html::Node { unimplemented!() }
+}
+
+#[derive(Debug)]
 pub struct CustomElementClass {
   tag: String,
 }
@@ -21,12 +31,13 @@ impl CustomElementClass {
 #[derive(Debug)]
 pub struct Element {
   class: Rc<ElementClass>,
+  // TODO: replace props and body with a Style instance
   props: HashMap<String, Value>,
-  body: Vec<Rc<Node>>,
+  body: Option<Vec<Rc<Node>>>,
 }
 
 impl Element {
-  pub fn new<P, B>(class: Rc<ElementClass>, props: P, body: B) -> Self
+  pub fn new<P, B>(class: Rc<ElementClass>, props: P, body: Option<B>) -> Self
   where
     P: IntoIterator<Item = (String, Value)>,
     B: IntoIterator<Item = Rc<Node>>,
@@ -34,13 +45,13 @@ impl Element {
     Self {
       class,
       props: props.into_iter().collect(),
-      body: body.into_iter().collect(),
+      body: body.map(|b| b.into_iter().collect()),
     }
   }
 
   pub fn props(&self) -> &HashMap<String, Value> { &self.props }
 
-  pub fn body(&self) -> &Vec<Rc<Node>> { &self.body }
+  pub fn body(&self) -> Option<&Vec<Rc<Node>>> { self.body.as_ref() }
 
   pub fn gen_html(&self) -> html::Node { self.class.gen_html(self) }
 }

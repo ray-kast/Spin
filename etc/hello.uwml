@@ -1,20 +1,20 @@
 res {
-  h1-size: 20;
+  h1-size = 20;
 
   style Header {
-    font-weight: "bold";
+    font-weight = "bold";
   }
 
   style H1: Header {
-    tag: "h1";
-    font-size: h1-size;
+    tag = "h1";
+    font-size = h1-size;
   }
 
-  style Em { tag: "em"; }
+  style Em { tag = "em"; }
 }
 
 Html {
-  title: "hi";
+  title = "hi";
 
   Body {
     Div {

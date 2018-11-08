@@ -32,10 +32,11 @@ Res: Res = {
 };
 
 Def: Def = {
-  "def" <Ident> "=" <Ident> ";" => Def::Alias(<>),
+  "def" <Ident> "=" <ElemHead> ";" => Def::Alias(<>),
   "def" <Ident> "{" <ElemBody> "}" => Def::Elem(<>),
 };
 
+// TODO: fix this syntax (namely missing style target class)
 Style: Style = "style" <name:Ident> <base:BaseStyles> "{" <body:ElemBody> "}" => Style{<>};
 
 Node: Node = {
@@ -43,20 +44,26 @@ Node: Node = {
   Elem => Node::Elem(<>),
 };
 
-Elem: Elem = <name:Ident> <base:BaseStyles> "{" <body:ElemBody> "}" => Elem{<>};
+Elem: Elem = <head:ElemHead> "{" <body:ElemBody> "}" => Elem{<>};
+
+ElemHead: ElemHead = <class:Ident> <base:BaseStyles> => ElemHead{<>};
 
 BaseStyles = { => Vec::new(), ":" <CommaList<Ident>> };
 
-ElemBody: ElemBody = <props:Prop*> <children:Node*> => ElemBody{<>};
+ElemBody: ElemBody = <props:Prop*> <children:Children> => ElemBody{<>};
 
-Prop: Prop = <Ident> ":" <PropVal> ";" => Prop(<>);
+Children: Option<Vec<Node>> = { "auto" => None, Node* => Some(<>) };
+
+Prop: Prop = <Ident> "=" <PropVal> ";" => Prop(<>);
 
 PropVal: PropVal = {
   "default" => PropVal::Default,
-  IntLit => PropVal::Int(<>),
   StrLit => PropVal::String(<>),
+  IntLit => PropVal::Int(<>),
   Ident => PropVal::Ident(<>),
+  Elem => PropVal::Elem(<>),
   "[" <CommaListOpt<PropVal>> "]" => PropVal::Array(<>),
+  "{" <Children> "}" => PropVal::Block(<>),
 };
 
 // Special terminals
