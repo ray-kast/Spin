@@ -1,25 +1,30 @@
 use super::prelude::*;
+use std::{cell::RefCell, convert::TryInto, marker::PhantomData};
 
 #[derive(Debug)]
 pub struct Scope {
   parents: Vec<Weak<Scope>>,
-  items: HashMap<String, ScopeItem>,
+  items: RefCell<HashMap<String, ScopeItem>>,
 }
 
+pub struct ScopeBuilder(Rc<Scope>);
+
 impl Scope {
-  pub fn new<P>(parents: P) -> Self
+  pub fn new<P>(parents: P) -> (Rc<Self>, ScopeBuilder)
   where
     P: IntoIterator<Item = Weak<Scope>>,
   {
-    Self {
+    let scope = Rc::new(Self {
       parents: parents.into_iter().collect(),
-      items: HashMap::new(),
-    }
+      items: RefCell::new(HashMap::new()),
+    });
+
+    (scope.clone(), ScopeBuilder(scope))
   }
 
   // TODO: add a predicate
   fn lookup_all(&self, name: &str, results: &mut Vec<ScopeItem>) {
-    if let Some(itm) = self.items.get(name) {
+    if let Some(itm) = self.items.borrow().get(name) {
       results.push(itm.clone());
     }
 
@@ -28,7 +33,7 @@ impl Scope {
     }
   }
 
-  pub fn lookup(&self, name: &str) -> ScopeItem {
+  fn lookup(&self, name: &str) -> ScopeItem {
     let items = {
       let mut items = Vec::new();
       self.lookup_all(name, &mut items);
@@ -42,16 +47,11 @@ impl Scope {
       _ => panic!("use of ambiguous name '{}'", name),
     }
   }
+}
 
-  pub fn lookup_class(&self, name: &str) -> Rc<ElementClass> {
-    match self.lookup(name) {
-      ScopeItem::Class(c) => c,
-      _ => panic!("expected element class"), // TODO: don't panic
-    }
-  }
-
-  pub fn define(&mut self, name: String, itm: ScopeItem) {
-    match self.items.entry(name) {
+impl ScopeBuilder {
+  pub fn define(&self, name: String, itm: ScopeItem) {
+    match self.0.items.borrow_mut().entry(name) {
       HashEntry::Vacant(v) => {
         v.insert(itm);
       },
@@ -60,7 +60,6 @@ impl Scope {
   }
 }
 
-// TODO: try to remove the Clone derive and unwrap things from Rcs
 #[derive(Clone, Debug)]
 pub enum ScopeItem {
   Value(Rc<Value>),
@@ -100,4 +99,71 @@ where
   T: ElementClass + 'static,
 {
   fn from(class: T) -> Self { Rc::new(class).into() }
+}
+
+impl TryInto<Rc<Value>> for ScopeItem {
+  // TODO: fix this
+  type Error = ();
+
+  fn try_into(self) -> Result<Rc<Value>, Self::Error> {
+    match self {
+      ScopeItem::Value(v) => Ok(v),
+      _ => Err(()),
+    }
+  }
+}
+
+impl TryInto<Rc<Style>> for ScopeItem {
+  // TODO: fix this
+  type Error = ();
+
+  fn try_into(self) -> Result<Rc<Style>, Self::Error> {
+    match self {
+      ScopeItem::Style(s) => Ok(s),
+      _ => Err(()),
+    }
+  }
+}
+
+impl TryInto<Rc<ElementClass>> for ScopeItem {
+  // TODO: fix this
+  type Error = ();
+
+  fn try_into(self) -> Result<Rc<ElementClass>, Self::Error> {
+    match self {
+      ScopeItem::Class(c) => Ok(c),
+      _ => Err(()),
+    }
+  }
+}
+
+// TODO: make sure all ScopeRefs are valid, even if they're not used
+#[derive(Debug)]
+pub struct ScopeRef<T>
+where
+  ScopeItem: TryInto<T>,
+  T: Clone,
+{
+  scope: Weak<Scope>,
+  name: String,
+  _x: PhantomData<T>,
+}
+
+impl<T> ScopeRef<T>
+where
+  ScopeItem: TryInto<T>,
+  T: Clone,
+{
+  pub fn new(scope: Weak<Scope>, name: String) -> Self {
+    Self {
+      scope,
+      name,
+      _x: PhantomData,
+    }
+  }
+
+  pub fn get(&self) -> Result<T, <ScopeItem as TryInto<T>>::Error> {
+    // TODO: probably shouldn't panic
+    self.scope.upgrade().unwrap().lookup(&self.name).try_into()
+  }
 }

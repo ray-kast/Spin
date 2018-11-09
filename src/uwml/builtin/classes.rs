@@ -6,28 +6,34 @@ pub struct HtmlElementClass;
 #[derive(Debug)]
 pub struct NElementClass;
 
+impl StyleInfo for HtmlElementClass {
+  fn get_prop(&self, _name: &str) -> Option<Rc<Value>> { None }
+
+  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> { None }
+}
+
 impl ElementClass for HtmlElementClass {
   fn gen_html(&self, element: &Element) -> html::Node {
     // TODO: don't panic
     // TODO: should direct control of the <head> tag be allowed?
     // TODO: do actual property validation somewhere
-    // TODO: perform proper property lookup
-    let head_els: Vec<_> = match element.props().get("head") {
-      Some(Value::Block(b)) => {
-        b.iter().flat_map(|v| v).map(|n| n.gen_html()).collect()
+    let head_els: Vec<_> = match element.get_prop("head") {
+      Some(v) => match &*v {
+        Value::Block(b) => {
+          b.iter().flat_map(|v| v).map(|n| n.gen_html()).collect()
+        },
+        _ => panic!("expected block for property 'head'"),
       },
-      Some(_) => panic!("expected block for property 'head'"),
       None => Vec::new(),
     };
 
     let head = html::Branch::new(html::BranchTag::Head, head_els);
     let body = html::Branch::new(
       html::BranchTag::Body,
-      element
-        .body()
-        .into_iter()
-        .flat_map(|v| v)
-        .map(|n| n.gen_html()),
+      element.get_body().map_or_else(
+        || Vec::new(),
+        |v| v.iter().map(|n| n.gen_html()).collect(),
+      ),
     );
 
     html::Branch::new(html::BranchTag::Html, vec![head.into(), body.into()])
@@ -35,18 +41,27 @@ impl ElementClass for HtmlElementClass {
   }
 }
 
+impl StyleInfo for NElementClass {
+  fn get_prop(&self, _name: &str) -> Option<Rc<Value>> { None }
+
+  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> { None }
+}
+
 impl ElementClass for NElementClass {
   fn gen_html(&self, element: &Element) -> html::Node {
     // TODO: don't panic
     // TODO: do actual property validation somewhere
-    // TODO: perform proper property lookup
-    match if let Some(Value::String(s)) = element.props().get("tag") {
-      html::parse_tag(s).unwrap()
+    match if let Some(v) = element.get_prop("tag") {
+      if let Value::String(s) = &*v {
+        html::parse_tag(s).unwrap()
+      } else {
+        panic!("expecting string for property 'tag'");
+      }
     } else {
       panic!("missing string property 'tag'");
     } {
       html::NodeTag::Leaf(l) => {
-        if !element.body().map_or(true, |b| b.is_empty()) {
+        if !element.get_body().map_or(true, |b| b.is_empty()) {
           panic!("leaf element cannot have content");
         }
 
@@ -54,11 +69,10 @@ impl ElementClass for NElementClass {
       },
       html::NodeTag::Branch(b) => html::Branch::new(
         b,
-        element
-          .body()
-          .into_iter()
-          .flat_map(|v| v)
-          .map(|n| n.gen_html()),
+        element.get_body().map_or_else(
+          || Vec::new(),
+          |v| v.iter().map(|n| n.gen_html()).collect(),
+        ),
       )
       .into(),
     }

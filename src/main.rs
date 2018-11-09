@@ -1,3 +1,5 @@
+#![feature(try_from)]
+
 #[macro_use]
 extern crate lalrpop_util; // TODO: I think I should be able to remove this
 
@@ -43,7 +45,11 @@ fn main() {
 
   println!("AST: {:#?}", ast);
 
-  let doc = uwml::compile(ast);
+  let root_scope = uwml::builtin::gen_scope();
+
+  println!("root scope: {:#?}", root_scope);
+
+  let doc = uwml::compile(ast, &root_scope);
 
   println!("document: {:#?}", doc);
 

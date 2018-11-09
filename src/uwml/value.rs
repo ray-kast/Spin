@@ -4,7 +4,6 @@ use super::prelude::*;
 pub enum Value {
   String(String),
   Int(i64),
-  Ident(String), // TODO: remove this
   Element(Rc<Element>),
   Array(Vec<Value>),
   Block(Option<Vec<Rc<Node>>>),

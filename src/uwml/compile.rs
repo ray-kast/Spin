@@ -1,9 +1,7 @@
 use super::prelude::*;
 use crate::ast;
 
-pub fn compile(doc: ast::Doc) -> Document {
-  let root_scope = builtin::gen_scope();
-
+pub fn compile(doc: ast::Doc, root_scope: &Rc<Scope>) -> Document {
   let scope = compile_scope(doc.res_list, &root_scope);
   let root = compile_node(doc.body, &scope);
 
@@ -11,17 +9,17 @@ pub fn compile(doc: ast::Doc) -> Document {
 }
 
 fn compile_scope(res_list: Vec<ast::Res>, parent: &Rc<Scope>) -> Rc<Scope> {
-  let mut scope = Scope::new(vec![Rc::downgrade(parent)]);
+  let (scope, builder) = Scope::new(vec![Rc::downgrade(parent)]);
 
   for res in res_list {
     let (name, itm) = compile_res(res, &scope);
-    scope.define(name, itm);
+    builder.define(name, itm);
   }
 
-  Rc::new(scope)
+  scope
 }
 
-fn compile_res(res: ast::Res, scope: &Scope) -> (String, ScopeItem) {
+fn compile_res(res: ast::Res, scope: &Rc<Scope>) -> (String, ScopeItem) {
   match res {
     ast::Res::Prop(ast::Prop(n, v)) => (n, compile_propval(v, scope).into()),
     ast::Res::Def(d) => compile_def(d, scope),
@@ -29,44 +27,81 @@ fn compile_res(res: ast::Res, scope: &Scope) -> (String, ScopeItem) {
   }
 }
 
-fn compile_style(style: ast::Style, scope: &Scope) -> (String, ScopeItem) {
-  (style.name, Style::new(vec![]).into())
+fn compile_style(style: ast::Style, scope: &Rc<Scope>) -> (String, ScopeItem) {
+  (
+    style.name,
+    create_style(style.base, style.body, scope).into(),
+  )
 }
 
-fn compile_def(def: ast::Def, scope: &Scope) -> (String, ScopeItem) {
+fn compile_def(def: ast::Def, scope: &Rc<Scope>) -> (String, ScopeItem) {
   match def {
-    ast::Def::Alias(n, v) => unimplemented!(),
-    ast::Def::Elem(n, e) => unimplemented!(),
+    ast::Def::Alias(n, h) => (n, compile_def_alias(h, scope).into()),
+    ast::Def::Elem(n, e) => (n, compile_def_elem(e, scope).into()),
   }
 }
 
-// fn compile_def_elem(_elem: ast::ElemBody, _scope: &Scope) -> Rc<ElementClass> {
-//   Rc::new(CustomElementClass::new("div".to_string())) // TODO
-// }
+fn compile_def_alias(
+  head: ast::ElemHead,
+  scope: &Rc<Scope>,
+) -> AliasElementClass {
+  AliasElementClass::new(
+    ScopeRef::new(Rc::downgrade(scope), head.class),
+    compile_base(head.base, scope),
+  )
+}
 
-fn compile_node(node: ast::Node, scope: &Scope) -> Rc<Node> {
+fn compile_def_elem(
+  _elem: ast::ElemBody,
+  _scope: &Rc<Scope>,
+) -> CustomElementClass {
+  CustomElementClass::new("div".to_string()) // TODO
+}
+
+fn compile_node(node: ast::Node, scope: &Rc<Scope>) -> Rc<Node> {
   Rc::new(match node {
     ast::Node::Text(s) => Node::Text(s),
     ast::Node::Elem(e) => Node::Element(compile_elem(e, scope)),
   })
 }
 
-fn compile_elem(elem: ast::Elem, scope: &Scope) -> Rc<Element> {
-  let (props, body) = compile_elembody(elem.body, scope);
-
-  Rc::new(Element::new(scope.lookup_class(&elem.head.class), props, body))
+fn compile_elem(elem: ast::Elem, scope: &Rc<Scope>) -> Rc<Element> {
+  Rc::new(Element::new(
+    ScopeRef::new(Rc::downgrade(scope), elem.head.class),
+    create_style(elem.head.base, elem.body, scope),
+  ))
 }
 
-// TODO: why does scope have to be static?
+fn create_style(
+  base: Vec<String>,
+  body: ast::ElemBody,
+  scope: &Rc<Scope>,
+) -> Style {
+  let (props, body) = compile_elembody(body, scope);
+
+  Style::new(compile_base(base, scope), props, body)
+}
+
+// TODO: create some kind of style-base object to abstract lookup
+fn compile_base<'a>(
+  base: Vec<String>,
+  scope: &'a Rc<Scope>,
+) -> impl Iterator<Item = ScopeRef<Rc<Style>>> + 'a {
+  base
+    .into_iter()
+    .rev()
+    .map(move |b| ScopeRef::new(Rc::downgrade(scope), b))
+}
+
 fn compile_elembody(
   body: ast::ElemBody,
-  scope: &Scope,
-) -> (Vec<(String, Value)>, Option<Vec<Rc<Node>>>) {
+  scope: &Rc<Scope>,
+) -> (Vec<(String, Rc<Value>)>, Option<Vec<Rc<Node>>>) {
   (
     body
       .props
       .into_iter()
-      .map(|ast::Prop(k, v)| (k, compile_propval(v, scope)))
+      .map(|ast::Prop(k, v)| (k, Rc::new(compile_propval(v, scope))))
       .collect(),
     body
       .children
@@ -74,12 +109,12 @@ fn compile_elembody(
   )
 }
 
-fn compile_propval(val: ast::PropVal, scope: &Scope) -> Value {
+fn compile_propval(val: ast::PropVal, scope: &Rc<Scope>) -> Value {
   match val {
     ast::PropVal::Default => unimplemented!(),
     ast::PropVal::String(s) => s.into(),
     ast::PropVal::Int(i) => i.into(),
-    ast::PropVal::Ident(i) => Value::Ident(i),
+    ast::PropVal::Ident(_i) => unimplemented!(),
     ast::PropVal::Elem(e) => compile_elem(e, scope).into(),
     ast::PropVal::Array(a) => a
       .into_iter()

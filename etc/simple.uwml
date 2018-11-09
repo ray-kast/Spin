@@ -1,7 +1,13 @@
+res {
+  def Link = N: LinkTag;
+
+  style LinkTag { tag = "fucc"; tag = "link"; }
+}
+
 Html {
   head = {
-    N { tag = "link"; }
-    N { tag = "link"; auto } "TODO: should this be an error?"
+    Link {}
+    Link { auto } "TODO: should this be an error?"
     "TODO: add comments to the grammar"
   };
 
