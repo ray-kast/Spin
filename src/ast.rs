@@ -46,6 +46,7 @@ pub struct ElemHead {
 
 #[derive(Debug)]
 pub struct ElemBody {
+  pub res: Vec<Res>,
   pub props: Vec<Prop>,
   pub children: Option<Vec<Node>>,
 }

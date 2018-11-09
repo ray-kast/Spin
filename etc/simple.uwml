@@ -1,10 +1,17 @@
 res {
   def Link = N: LinkTag;
 
+  style EmTag { tag = "em"; }
   style LinkTag { tag = "fucc"; tag = "link"; }
+  style PTag { tag = "p"; }
 }
 
 Html {
+  res {
+    def Bold = N: EmTag;
+    def Link = N: LinkTag;
+  }
+
   head = {
     Link {}
     Link { auto } "TODO: should this be an error?"
@@ -14,7 +21,7 @@ Html {
   N {
     tag = "p";
     "Hello "
-    N { tag = "em"; "World" }
+    Bold { "World" }
     "!"
   }
 }

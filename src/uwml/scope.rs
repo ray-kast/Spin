@@ -4,7 +4,7 @@ use std::{cell::RefCell, convert::TryInto, marker::PhantomData};
 #[derive(Debug)]
 pub struct Scope {
   parents: Vec<Weak<Scope>>,
-  items: RefCell<HashMap<String, ScopeItem>>,
+  items: RefCell<HashMap<String, Vec<ScopeItem>>>,
 }
 
 pub struct ScopeBuilder(Rc<Scope>);
@@ -24,8 +24,9 @@ impl Scope {
 
   // TODO: add a predicate
   fn lookup_all(&self, name: &str, results: &mut Vec<ScopeItem>) {
-    if let Some(itm) = self.items.borrow().get(name) {
-      results.push(itm.clone());
+    if let Some(itms) = self.items.borrow().get(name) {
+      results.extend(itms.iter().map(|i| i.clone()));
+      return; // Shadow inherited names if we have a match
     }
 
     for parent in &self.parents {
@@ -53,9 +54,11 @@ impl ScopeBuilder {
   pub fn define(&self, name: String, itm: ScopeItem) {
     match self.0.items.borrow_mut().entry(name) {
       HashEntry::Vacant(v) => {
-        v.insert(itm);
+        v.insert(vec![itm]);
       },
-      HashEntry::Occupied(_) => panic!(""),
+      HashEntry::Occupied(o) => {
+        o.into_mut().push(itm);
+      }
     }
   }
 }

@@ -8,19 +8,26 @@ pub trait StyleInfo {
 
 #[derive(Debug)]
 pub struct Style {
+  scope: Rc<Scope>,
   base: Vec<ScopeRef<Rc<Style>>>,
   props: HashMap<String, Rc<Value>>,
   body: Option<Rc<Vec<Node>>>,
 }
 
 impl Style {
-  pub fn new<B, P, O>(base: B, props: P, body: Option<O>) -> Self
+  pub fn new<B, P, O>(
+    scope: Rc<Scope>,
+    base: B,
+    props: P,
+    body: Option<O>,
+  ) -> Self
   where
     B: IntoIterator<Item = ScopeRef<Rc<Style>>>,
     P: IntoIterator<Item = (String, Rc<Value>)>,
     O: IntoIterator<Item = Node>,
   {
     Self {
+      scope,
       base: base.into_iter().collect(),
       props: props.into_iter().collect(),
       body: body.map(|b| Rc::new(b.into_iter().collect())),

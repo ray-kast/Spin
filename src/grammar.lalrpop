@@ -50,7 +50,7 @@ ElemHead: ElemHead = <class:Ident> <base:BaseStyles> => ElemHead{<>};
 
 BaseStyles = { => Vec::new(), ":" <CommaList<Ident>> };
 
-ElemBody: ElemBody = <props:Prop*> <children:Children> => ElemBody{<>};
+ElemBody: ElemBody = <res:ResList> <props:Prop*> <children:Children> => ElemBody{<>};
 
 Children: Option<Vec<Node>> = { "auto" => None, Node* => Some(<>) };
 

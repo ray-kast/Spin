@@ -77,9 +77,9 @@ fn create_style(
   body: ast::ElemBody,
   scope: &Rc<Scope>,
 ) -> Style {
-  let (props, body) = compile_elembody(body, scope);
+  let (newscope, props, body) = compile_elembody(body, scope);
 
-  Style::new(compile_base(base, scope), props, body)
+  Style::new(newscope, compile_base(base, scope), props, body)
 }
 
 // TODO: create some kind of style-base object to abstract lookup
@@ -96,16 +96,24 @@ fn compile_base<'a>(
 fn compile_elembody(
   body: ast::ElemBody,
   scope: &Rc<Scope>,
-) -> (Vec<(String, Rc<Value>)>, Option<Vec<Node>>) {
+) -> (Rc<Scope>, Vec<(String, Rc<Value>)>, Option<Vec<Node>>) {
+  let newscope = compile_scope(body.res, scope);
+
+  let newscope_1 = newscope.clone();
+  let newscope_2 = newscope.clone();
+
   (
+    newscope,
     body
       .props
       .into_iter()
-      .map(|ast::Prop(k, v)| (k, Rc::new(compile_propval(v, scope))))
+      .map(move |ast::Prop(k, v)| (k, Rc::new(compile_propval(v, &newscope_1))))
       .collect(),
-    body
-      .children
-      .map(|c| c.into_iter().map(|n| compile_node(n, scope)).collect()),
+    body.children.map(move |c| {
+      c.into_iter()
+        .map(|n| compile_node(n, &newscope_2))
+        .collect()
+    }),
   )
 }
 
