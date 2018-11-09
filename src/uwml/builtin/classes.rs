@@ -9,7 +9,7 @@ pub struct NElementClass;
 impl StyleInfo for HtmlElementClass {
   fn get_prop(&self, _name: &str) -> Option<Rc<Value>> { None }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> { None }
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> { None }
 }
 
 impl ElementClass for HtmlElementClass {
@@ -44,7 +44,7 @@ impl ElementClass for HtmlElementClass {
 impl StyleInfo for NElementClass {
   fn get_prop(&self, _name: &str) -> Option<Rc<Value>> { None }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> { None }
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> { None }
 }
 
 impl ElementClass for NElementClass {

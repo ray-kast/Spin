@@ -3,14 +3,14 @@ use super::prelude::*;
 pub trait StyleInfo {
   fn get_prop(&self, name: &str) -> Option<Rc<Value>>;
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>>;
+  fn get_body(&self) -> Option<Rc<Vec<Node>>>;
 }
 
 #[derive(Debug)]
 pub struct Style {
   base: Vec<ScopeRef<Rc<Style>>>,
   props: HashMap<String, Rc<Value>>,
-  body: Option<Rc<Vec<Rc<Node>>>>,
+  body: Option<Rc<Vec<Node>>>,
 }
 
 impl Style {
@@ -18,7 +18,7 @@ impl Style {
   where
     B: IntoIterator<Item = ScopeRef<Rc<Style>>>,
     P: IntoIterator<Item = (String, Rc<Value>)>,
-    O: IntoIterator<Item = Rc<Node>>,
+    O: IntoIterator<Item = Node>,
   {
     Self {
       base: base.into_iter().collect(),
@@ -45,7 +45,7 @@ impl StyleInfo for Style {
     )
   }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> {
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> {
     self.body.as_ref().map_or_else(
       || {
         for base in &self.base {

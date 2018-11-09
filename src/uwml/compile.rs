@@ -58,18 +58,18 @@ fn compile_def_elem(
   CustomElementClass::new("div".to_string()) // TODO
 }
 
-fn compile_node(node: ast::Node, scope: &Rc<Scope>) -> Rc<Node> {
-  Rc::new(match node {
+fn compile_node(node: ast::Node, scope: &Rc<Scope>) -> Node {
+  match node {
     ast::Node::Text(s) => Node::Text(s),
     ast::Node::Elem(e) => Node::Element(compile_elem(e, scope)),
-  })
+  }
 }
 
-fn compile_elem(elem: ast::Elem, scope: &Rc<Scope>) -> Rc<Element> {
-  Rc::new(Element::new(
+fn compile_elem(elem: ast::Elem, scope: &Rc<Scope>) -> Element {
+  Element::new(
     ScopeRef::new(Rc::downgrade(scope), elem.head.class),
     create_style(elem.head.base, elem.body, scope),
-  ))
+  )
 }
 
 fn create_style(
@@ -96,7 +96,7 @@ fn compile_base<'a>(
 fn compile_elembody(
   body: ast::ElemBody,
   scope: &Rc<Scope>,
-) -> (Vec<(String, Rc<Value>)>, Option<Vec<Rc<Node>>>) {
+) -> (Vec<(String, Rc<Value>)>, Option<Vec<Node>>) {
   (
     body
       .props

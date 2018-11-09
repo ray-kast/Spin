@@ -3,7 +3,7 @@ use super::prelude::*;
 #[derive(Debug)]
 pub enum Node {
   Text(String),
-  Element(Rc<Element>),
+  Element(Element),
 }
 
 impl Node {

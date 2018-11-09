@@ -35,7 +35,7 @@ impl StyleInfo for AliasElementClass {
     None
   }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> {
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> {
     for base in &self.base {
       // TODO: probably shouldn't panic
       if let Some(b) = base.get().unwrap().get_body() {
@@ -67,7 +67,7 @@ impl CustomElementClass {
 impl StyleInfo for CustomElementClass {
   fn get_prop(&self, _name: &str) -> Option<Rc<Value>> { None }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> { None }
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> { None }
 }
 
 impl ElementClass for CustomElementClass {
@@ -100,7 +100,7 @@ impl StyleInfo for Element {
       .or_else(|| self.class.get().unwrap().get_prop(name))
   }
 
-  fn get_body(&self) -> Option<Rc<Vec<Rc<Node>>>> {
+  fn get_body(&self) -> Option<Rc<Vec<Node>>> {
     self
       .style
       .get_body()
